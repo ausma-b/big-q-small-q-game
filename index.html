@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Big Q or small q</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* Plan: cool paper ground, deep ink, ultramarine for Big Q, burnt orange for small q, graphite for "can't tell".
+   Layout idea: one shared-screen stage with a slim header and footer; the title plays a big Q against a small q.
+   Single light theme by choice: high contrast for screen sharing. */
+:root{
+  --paper:#EEF1F6; --card:#FFFFFF; --ink:#101A33; --muted:#4B5873; --line:#CBD3E1;
+  --bigq:#2E3FD1; --bigq-soft:#E4E8FB;
+  --smallq:#BF4209; --smallq-soft:#FBE7DB;
+  --grey:#46526B; --grey-soft:#E7EAF0;
+  --good:#17703F; --good-soft:#DDF3E6; --warn:#8A5A00; --warn-soft:#FFF1CC;
+  --display:'Instrument Serif',Georgia,'Times New Roman',serif;
+  --body:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --r:14px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font:400 1.0625rem/1.55 var(--body)}
+h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.08;margin:0;text-wrap:balance;letter-spacing:-.005em}
+h2{font-size:clamp(2rem,4.2vw,3rem);margin-bottom:.4em}
+h2.big{font-size:clamp(2.8rem,6.5vw,4.8rem)}
+h3{font-size:1.55rem;margin-bottom:.35em}
+p{margin:0 0 .8em;max-width:68ch}
+ul{margin:.2em 0 .8em;padding-left:1.15em} li{margin:.25em 0;max-width:70ch}
+a{color:var(--bigq)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--bigq);outline-offset:2px;border-radius:6px}
+#app{height:100%;display:grid;grid-template-rows:auto 1fr auto}
+.top{display:flex;align-items:center;gap:16px;padding:10px 20px;background:var(--card);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.logo{display:flex;align-items:baseline;font-family:var(--display);line-height:1;white-space:nowrap}
+.logo .L{font-size:2.3rem;color:var(--bigq)} .logo .s{font-size:1.25rem;color:var(--smallq);margin-left:1px}
+.prog{display:flex;gap:5px;align-items:center;flex:1;min-width:200px;flex-wrap:wrap}
+.prog button{width:22px;height:9px;border-radius:5px;border:0;background:var(--line);padding:0}
+.prog button.done{background:var(--muted)} .prog button.cur{background:var(--ink);width:36px}
+.prog .gap{width:8px}
+.phase{font-size:.85rem;color:var(--muted);white-space:nowrap}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:2px solid var(--ink);background:var(--card);border-radius:999px;padding:.45em 1.1em;font-weight:700;font-size:.95rem;line-height:1.2}
+.btn:hover{background:var(--grey-soft)}
+.btn.primary{background:var(--ink);color:#fff} .btn.primary:hover{background:#25325a}
+.btn.sm{padding:.25em .75em;font-size:.85rem}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+main{overflow:auto;padding:28px 24px 48px}
+.wrap{max-width:1120px;margin:0 auto}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 20px;background:var(--card);border-top:1px solid var(--line)}
+.foot .hint{color:var(--muted);font-size:.9rem;flex:1;text-align:center}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.eyebrow{font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:.4em}
+.lead{font-size:1.25rem;color:var(--ink);max-width:62ch}
+.tag{display:inline-flex;gap:.4em;align-items:center;border-radius:999px;padding:.12em .7em;font-size:.85rem;font-weight:700;white-space:nowrap}
+.tQ{background:var(--bigq-soft);color:var(--bigq)} .tq{background:var(--smallq-soft);color:var(--smallq)} .tu{background:var(--grey-soft);color:var(--grey)}
+.weak{font-weight:400;font-style:italic;color:var(--muted);font-size:.85rem}
+.note{background:var(--warn-soft);border-left:5px solid #C58A00;padding:.7em 1em;border-radius:8px;max-width:70ch}
+.note.blue{background:var(--bigq-soft);border-color:var(--bigq)}
+.hero{padding:6px 0 18px}
+.title{font-size:clamp(2.6rem,8vw,6.2rem);line-height:.95;display:flex;flex-wrap:wrap;align-items:baseline;gap:.18em .3em;margin-bottom:.25em}
+.title .Q{color:var(--bigq)} .title .or{font-size:.4em;color:var(--muted);font-style:italic}
+.title .q{color:var(--smallq);font-size:.42em}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;display:flex;gap:12px;align-items:flex-start;padding:.5em 0}
+.steps li::before{content:counter(s);font-family:var(--display);font-size:1.8rem;line-height:1;color:var(--bigq);min-width:1.1em}
+.strip{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px dashed var(--muted);border-radius:var(--r);padding:10px 14px;margin:0 0 18px}
+.strip-label{font-weight:700;font-size:.9rem;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:#fff;border-radius:999px;padding:.25em .4em .25em 1em;font-weight:700}
+.chip small{font-weight:400;opacity:.8}
+.chip button{background:rgba(255,255,255,.18);border:0;border-radius:999px;color:#fff;width:26px;height:26px;font-size:.9rem;line-height:1}
+.chip button:hover{background:rgba(255,255,255,.35)}
+.strip .readout{flex-basis:100%;font-size:.9rem;color:var(--muted);margin:0}
+.ladder{display:grid;gap:10px}
+.rung{border-radius:12px;padding:12px 16px;border:1px solid var(--line);background:#fff}
+.rung .k{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.rung.theme{background:var(--bigq-soft);border-color:var(--bigq)}
+.arrow{text-align:center;color:var(--muted);line-height:1}
+.tbl{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#fff}
+.tbl th,.tbl td{padding:12px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+.tbl tr:last-child td,.tbl tr:last-child th{border-bottom:0}
+.tbl thead th{font-family:var(--display);font-weight:400;font-size:2rem}
+.tbl thead th.c1{background:var(--smallq-soft);color:var(--smallq)} .tbl thead th.c2{background:var(--bigq-soft);color:var(--bigq)}
+.tbl tbody th{font-weight:700;color:var(--muted);font-size:.9rem;width:18%}
+.tscroll{overflow-x:auto}
+.line5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.pos{border:2px solid transparent;border-radius:12px;padding:10px 6px 8px;text-align:center;font-weight:700;font-size:.95rem;line-height:1.2;min-height:64px;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
+.pos .bar{height:8px;border-radius:4px;background:rgba(0,0,0,.12);overflow:hidden} .pos .bar i{display:block;height:100%;background:currentColor}
+.pos .n{font-size:.85rem;font-weight:400}
+.p0{background:var(--bigq);color:#fff;border-color:var(--bigq)} .p1{background:var(--bigq-soft);color:var(--bigq);border-color:var(--bigq-soft)}
+.p2{background:var(--grey-soft);color:var(--grey);border-color:var(--grey-soft)} .p3{background:var(--smallq-soft);color:var(--smallq);border-color:var(--smallq-soft)}
+.p4{background:var(--smallq);color:#fff;border-color:var(--smallq)}
+button.pos:hover{border-color:var(--ink)}
+.cardhead{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.pip{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.85rem;border:2px solid var(--line);background:#fff;color:var(--muted);padding:0}
+.pip.cur{border-color:var(--ink);color:var(--ink)} .pip.ok{background:var(--good-soft);border-color:var(--good);color:var(--good)} .pip.no{background:var(--warn-soft);border-color:#C58A00;color:var(--warn)}
+.statement{font-family:var(--display);font-size:clamp(1.7rem,3.4vw,2.5rem);line-height:1.15;margin:.2em 0 .8em;max-width:30ch}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.choice{border:3px solid var(--line);border-radius:var(--r);background:#fff;padding:16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center}
+.choice .lbl{font-family:var(--display);font-size:2.2rem;line-height:1}
+.choice.Q .lbl{color:var(--bigq)} .choice.q .lbl{color:var(--smallq)} .choice.u .lbl{color:var(--grey)}
+.choice:hover:not([disabled]){border-color:var(--ink)}
+.choice.picked{border-color:var(--ink);background:var(--grey-soft)}
+.choice[disabled]{cursor:default}
+.fb{margin-top:16px;border-radius:var(--r);padding:14px 18px}
+.fb.ok{background:var(--good-soft)} .fb.no{background:var(--warn-soft)}
+.fb h3{font-size:1.4rem}
+.clue{border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px;display:grid;gap:6px}
+.clue h4{margin:0;font-size:1rem;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.clue .ask{color:var(--muted);font-style:italic;margin:0}
+.clue p{margin:0}
+.clue.open{border-color:var(--ink)}
+.kit{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+.kit .clue{align-content:start}
+.cite{font-size:.92rem;color:var(--muted)}
+.snap li{margin:.35em 0}
+.reading{border:2px solid var(--ink);border-radius:var(--r);padding:18px 22px;background:#fff}
+.mini{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:8px 0 14px;max-width:520px}
+.mini span{height:12px;border-radius:6px;background:var(--line)} .mini span.on{background:var(--ink);height:22px;align-self:end}
+.axis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.slot{min-height:150px;border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;justify-content:flex-end}
+.slot .lab{font-weight:700;font-size:.9rem;text-align:center;margin-top:auto;padding-top:6px}
+.mk{background:#fff;color:var(--ink);border:2px solid var(--ink);border-radius:10px;padding:6px 8px;font-size:.85rem;line-height:1.25}
+.mk b{display:block}
+.opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:12px 16px;margin:8px 0;font-size:1.05rem}
+.opt:hover:not([disabled]){border-color:var(--ink)} .opt.right{border-color:var(--good);background:var(--good-soft)} .opt.wrong{border-color:#C58A00;background:var(--warn-soft)} .opt.unsure{border-color:var(--ink);background:var(--grey-soft)}
+.opt[disabled]{cursor:default}
+.scrim{position:fixed;inset:0;background:rgba(16,26,51,.55);z-index:20}
+.dlg{position:fixed;z-index:21;inset:4vh 0 auto 0;margin:0 auto;width:min(960px,calc(100% - 32px));max-height:92vh;overflow:auto;background:var(--card);border-radius:18px;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.dlg h2{font-size:2.2rem}
+.tcard label{font-weight:700;display:block;margin-bottom:4px}
+.tcard textarea{width:100%;font:inherit;border:2px solid var(--line);border-radius:10px;padding:8px 10px;resize:vertical;background:#fff;color:var(--ink)}
+.tcard .count{font-size:.85rem;color:var(--muted)}
+select{font:inherit;border:2px solid var(--ink);border-radius:10px;padding:.3em .6em;background:#fff;color:var(--ink)}
+.hidden{display:none !important}
+.fac{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+.fac table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);margin:12px 0 28px}
+.fac th,.fac td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+.fac th{background:var(--grey-soft)}
+.fac .t{white-space:nowrap;font-weight:700}
+@media (max-width:640px){main{padding:18px 14px 40px}.foot .hint{display:none}.line5{gap:4px}.pos{font-size:.8rem;padding:8px 2px}.axis{gap:4px}.slot{padding:4px}}
+@media (prefers-reduced-motion:no-preference){.card,.reading,.fb{animation:rise .25s ease-out}@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal" class="hidden"></div>
+<noscript>This game needs JavaScript to run.</noscript>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = (s, r=document) => r.querySelector(s);
+const POS = ['Big Q','Leans Big Q','Mixed or unclear','Leans small q','small q'];
+const TAG = {
+  Q:'<span class="tag tQ">Leans Big Q</span>',
+  q:'<span class="tag tq">Leans small q</span>',
+  '?':'<span class="tag tu">Unclear</span>'
+};
+
+/* ---------- state ---------- */
+const S = {
+  i:0, draw:false, teamCount:4,
+  teams:Array.from({length:6},()=>({text:'',names:[],used:[]})),
+  draws:{}, basics:null,
+  sort:{i:0,picks:Array(10).fill(null)},
+  art:{},
+  qzPre:{i:0,picks:Array(5).fill(null)},
+  qzPost:{i:0,picks:Array(5).fill(null)}
+};
+
+/* ---------- content: sorting cards ---------- */
+const CARDS = [
+ {s:'The researcher treats their own background and viewpoint as a resource for understanding the data.',a:'Q',
+  why:'Big Q sees the researcher’s perspective as part of how meaning gets made. Researchers call thinking openly about it reflexivity.'},
+ {s:'Two coders label the same data separately, then check how often they agree.',a:'q',
+  why:'Agreement checks come from quantitative ideas about reliability: a good result should stay the same whoever does the coding.'},
+ {s:'The researcher builds themes by interpreting the data.',a:'Q',
+  why:'In Big Q work, researchers make themes. They build them from what they notice in the data and what it means.'},
+ {s:'A codebook fixes the codes before coding starts, and everyone applies it the same way.',a:'q',
+  why:'A fixed codebook aims for consistency between coders. That is a small q value.'},
+ {s:'The researcher works to reduce their own bias as far as possible.',a:'q',
+  why:'Small q borrows the quantitative aim of neutrality. Big Q treats the researcher’s perspective as unavoidable and useful.'},
+ {s:'Meaning depends on context and on who interprets it.',a:'Q',
+  why:'Big Q rests on the idea that knowledge depends on where, when and by whom someone produces it.'},
+ {s:'The study reports how many participants mentioned each topic, so readers can compare groups.',a:'q',
+  why:'Counting and comparing frequencies is a quantitative habit. It usually signals small q.'},
+ {s:'Coding stays open and changes as the researcher’s understanding grows.',a:'Q',
+  why:'Big Q coding is organic and evolving. Codes grow and change during the analysis.'},
+ {s:'The write-up says themes “emerged” from the data.',a:'u',
+  why:'One word gives a weak clue. Some Big Q researchers use “emerged” casually. Look at what the researchers did.'},
+ {s:'The data consist of interview transcripts or online posts.',a:'u',
+  why:'Either approach can use the same transcripts. What matters is how the researcher analyses them and which values guide the analysis.'}
+];
+
+/* ---------- content: articles ---------- */
+const CLUES = [
+ ['rel','Agreement checks or a codebook','Is there a second coder, an agreement score or a fixed codebook?'],
+ ['role','The researcher’s role','Do the authors treat their own views as a problem or a resource?'],
+ ['build','Where the categories come from','Did the authors set them in advance or build them while analysing?'],
+ ['count','Counting','Do the results depend on how often things appear?'],
+ ['words','The words used','How do the authors describe their themes and findings?'],
+ ['label','The approach named','Do the authors name a specific method, and which one?']
+];
+const ARTS = [
+ {key:'cl',n:1,
+  title:'Romance fraud and suspicious identities',
+  cite:'Cross, C., & Layt, R. (2022). “I suspect that the pictures are stolen”: Romance fraud, identity crime, and responding to suspicions of inauthentic identities. <i>Social Science Computer Review, 40</i>(4). <a href="https://doi.org/10.1177/0894439321999311" target="_blank" rel="noopener">doi.org/10.1177/0894439321999311</a>',
+  snap:[
+   'Data: 509 free-text reports to Australia’s Scamwatch. The researchers picked them from 2,671 online-dating romance fraud reports (July 2018 to July 2019). In these reports, people described doubts about who they were talking to.',
+   'Tool: NVivo 12, software that helps researchers organise qualitative data.',
+   'Steps: the researchers first sorted the reports into three groups they set in advance (identity of the offender, of the person reporting, of a third party). Inside the offender group they then built codes, such as the actions people took and whether a search backed up the suspicion.',
+   'Results: the authors show counts (for example, 172 people used a reverse image search) and quotes from the reports. They advise readers to treat the numbers with care.'],
+  clues:{
+   rel:{t:'The methods section reports no codebook and no second coder.',lean:'?',weak:true},
+   role:{t:'The methods say nothing about how the researchers’ own views shaped the analysis.',lean:'q',weak:true},
+   build:{t:'The researchers started with three categories they chose in advance, then built finer codes from the data, such as the actions people took.',lean:'q'},
+   count:{t:'The authors report how many cases fall in each group and advise readers to treat the numbers with care.',lean:'q'},
+   words:{t:'The authors call the three pre-set groups “themes” and “nodes”. The word “theme” alone tells you little.',lean:'?',weak:true},
+   label:{t:'The authors call the work qualitative analysis in NVivo and leave the specific approach unnamed.',lean:'?'}},
+  pos:3,
+  why:['The researchers set the main categories before coding, then filled them in from the data.','Counts show how common each action was.','The methods leave the researchers’ own position unexamined.','Together, these features look closer to descriptive content analysis than to reflexive thematic analysis.'],
+  caution:'Small q studies like this one answer their questions clearly and inform prevention messaging. Rich quotes from participants appear in both kinds of study.',
+  change:'A reflexivity statement, or evidence that the researchers reshaped the categories through interpretation, would move it toward the middle.',
+  prompt:'Which two clues did your team weigh most? Which clue did you want that the paper left out?'},
+ {key:'ch',n:2,
+  title:'Scam victimisation in a crypto community',
+  cite:'Childs, A. (2024). “I guess that’s the price of decentralisation…”: Understanding scam victimisation experiences in an online cryptocurrency community. <i>International Review of Victimology, 30</i>(3). <a href="https://doi.org/10.1177/02697580231215840" target="_blank" rel="noopener">doi.org/10.1177/02697580231215840</a>',
+  snap:[
+   'Data: the top 200 posts containing “scam” from the r/CryptoCurrency forum on Reddit, dated 2018 to 2022. The author collected only the original posts and skipped the comments.',
+   'Tools: the RedditExtractoR package collected the posts, and the author analysed them in NVivo.',
+   'Method: reflexive thematic analysis following Braun and Clarke. The author read the posts repeatedly and studied the original threads and the wider community for context.',
+   'Result: two themes. The author developed them deductively (guided by the study’s aims and expertise) and inductively (open to the unexpected).'],
+  clues:{
+   rel:{t:'The paper reports no codebook and no agreement check.',lean:'Q',weak:true},
+   role:{t:'The author describes their own subjectivity and ongoing reflection as an asset.',lean:'Q'},
+   build:{t:'The author developed themes from the study’s aims, their own expertise and the posts themselves, and stayed open to the unexpected. They combined codes across the whole dataset.',lean:'Q'},
+   count:{t:'The method description centres on building themes and says little about counting topics.',lean:'Q',weak:true},
+   words:{t:'The author says themes “emerged” from the posts and also says community members “construct” knowledge and norms. Both phrases appear in the same paper.',lean:'?',weak:true},
+   label:{t:'The author names reflexive thematic analysis and follows Braun and Clarke.',lean:'Q'}},
+  pos:0,
+  why:['Reflexive thematic analysis is a named Big Q approach.','The author uses their own perspective openly as part of the analysis.','The author describes themes as products of interpretation across the whole dataset.','The paper reports no codebook or agreement checks, which fits.'],
+  caution:'The paper says themes “emerged”. That word often signals small q, yet the practices here point to Big Q. Judge what the researchers did and treat one word as a weak clue.',
+  change:'If the paper had reported two coders checking agreement against a fixed codebook, the word “reflexive” would sit awkwardly beside it.',
+  prompt:'This paper uses the word “emerged” and works in a Big Q way. What does that tell you about judging a study by one word?'},
+ {key:'zh',n:3,
+  title:'Anti-fraud centres in China',
+  cite:'Zhou, Y., & Hendy, R. (2026). Situational crime prevention against cyberfraud: A case study of China’s anti-fraud centres. Vol. 28(2). <a href="https://doi.org/10.1177/14613557261447757" target="_blank" rel="noopener">doi.org/10.1177/14613557261447757</a>',
+  snap:[
+   'Data: semi-structured online interviews with 21 Chinese police officers, April to August 2023, averaging 97 minutes.',
+   'Sampling: the researchers used quota sampling across five levels of the police hierarchy.',
+   'Method: the authors describe reflexive thematic analysis in six phases, using NVivo. They coded sentence by sentence and produced 650 codes.',
+   'The authors grouped themes in line with existing theory, including situational crime prevention (SCP), and organised their findings under SCP’s five parts.'],
+  clues:{
+   rel:{t:'The methods report no codebook and no agreement check.',lean:'Q',weak:true},
+   role:{t:'The authors define reflexive thematic analysis and say findings link to the researcher’s own knowledge. The methods say little about how the researcher’s position shaped the coding.',lean:'?'},
+   build:{t:'The authors organised themes “in alignment with” existing theory and laid out the findings under the five parts of situational crime prevention.',lean:'q',weak:true},
+   count:{t:'The authors count codes (650) and references (2,579) to describe the work they did.',lean:'?',weak:true},
+   words:{t:'The authors talk about patterns “emerging” from interactions between participants and the researcher, and about what the study “found”.',lean:'?',weak:true},
+   label:{t:'The authors name reflexive thematic analysis and cite Braun and Clarke, with six phases and NVivo.',lean:'Q'}},
+  pos:2,
+  why:['The label says Big Q: reflexive thematic analysis, citing Braun and Clarke.','An existing framework (SCP) shapes the structure, which pulls toward categories set in advance.','Reflexive analysis can draw on theory, so the real question is how much interpretive building you can see.','Reasonable people can place this study anywhere from “leans Big Q” to “mixed”.'],
+  caution:'A gap between a label and a practice invites a closer read of the study.',
+  change:'A clear account of how the researcher’s position shaped the themes would move it toward Big Q. A theme list that mirrors SCP’s headings would move it toward small q.',
+  prompt:'Can a study name a Big Q method and still work in a small q way? What would you need to see to decide?'}
+];
+
+/* ---------- content: knowledge check ---------- */
+const QUIZ = [
+ {q:'A researcher asks 200 people an open question in a survey. Two coders label the answers and check how often they agree. Which approach is it most likely to be?',
+  o:['Big Q','small q','Can’t tell'],a:1,
+  why:'Agreement checks and fixed labels are small q habits. The data are words, and the thinking behind the analysis is quantitative.'},
+ {q:'In Big Q work, what is a theme?',
+  o:['A topic that came up often','A pattern of shared meaning that the researcher builds through interpretation','A code that two coders agreed on'],a:1,
+  why:'A topic works like a bucket. Big Q themes say something about meaning, and the researcher builds them.'},
+ {q:'An article says its themes “emerged” from the data. What can you conclude?',
+  o:['It must be small q','It must be Big Q','Very little yet. Check what the researchers did'],a:2,
+  why:'One word gives a weak clue. Our Childs article says “emerged” and works in a Big Q way.'},
+ {q:'Why might a Big Q researcher write about their own assumptions?',
+  o:['To admit mistakes','Their perspective shapes the analysis, and openness about it strengthens the work','An ethics board requires it'],a:1,
+  why:'This is reflexivity. In Big Q work the researcher helps make the meaning, so openness about their position strengthens the analysis.'},
+ {q:'Which statement is fair?',
+  o:['Small q research has poor quality','Big Q means anything goes','Each has its own standards, and trouble starts when researchers mix them without saying so'],a:2,
+  why:'Each approach has its own idea of good research. Problems arise when researchers mix the two without saying so.'}
+];
+
+/* ---------- speaker draw ---------- */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+function parseNames(txt){const seen=new Set();return txt.split(/[\n,;]+/).map(s=>s.trim()).filter(s=>{const k=s.toLowerCase();if(!s||seen.has(k))return false;seen.add(k);return true}).slice(0,40)}
+function drawRound(key){
+  const speakers=[]; let reset=false;
+  for(let t=0;t<S.teamCount;t++){
+    const T=S.teams[t]; if(!T.names.length){speakers.push(null);continue}
+    let pool=T.names.filter(n=>!T.used.includes(n));
+    if(!pool.length){T.used=[];pool=T.names.slice();reset=true}
+    const who=pick(pool);T.used.push(who);speakers.push(who);
+  }
+  S.draws[key]={speakers,reset,skip:{}};
+}
+function redrawOne(key,t){
+  const T=S.teams[t],d=S.draws[key];if(!d)return;
+  const prev=d.speakers[t];(d.skip[t]=d.skip[t]||[]).push(prev);
+  T.used=T.used.filter(n=>n!==prev);
+  const pool=T.names.filter(n=>!d.skip[t].includes(n)&&!T.used.includes(n));
+  const alt=pool.length?pool:T.names.filter(n=>!d.skip[t].includes(n));
+  if(!alt.length){d.skip[t]=[];return}
+  const who=pick(alt);T.used.push(who);d.speakers[t]=who;
+}
+function strip(key){
+  const any=S.teams.slice(0,S.teamCount).some(t=>t.names.length), d=S.draws[key];
+  if(!d)return `<div class="strip"><span class="strip-label">Speaker for this round</span><button class="btn sm primary" data-act="${any?'draw':'openDraw'}" data-key="${key}">${any?'Draw speakers':'Add names to draw'}</button><p class="readout">Each team writes its answer together. The drawn speaker reads it out.</p></div>`;
+  const chips=d.speakers.map((n,t)=>n?`<span class="chip"><small>${S.teamCount===1?'Class':'Team '+(t+1)}</small> ${esc(n)} <button data-act="redraw" data-key="${key}" data-t="${t}" aria-label="Redraw ${S.teamCount===1?'the speaker':'team '+(t+1)} (absent or cannot connect)" title="Redraw (absent or cannot connect)">↻</button></span>`:'').join('');
+  return `<div class="strip"><span class="strip-label">Speaker for this round</span>${chips}<p class="readout">${d.reset?'Everyone in a team has now had a turn, so that team starts a new cycle. ':''}Speakers read out what their team wrote. Use ↻ only if someone is absent or cannot connect.</p></div>`;
+}
+
+/* ---------- screens ---------- */
+function artState(k){return S.art[k]||(S.art[k]={clues:[],votes:[0,0,0,0,0],hist:[],reading:false})}
+function clueCard(a,idx){
+  const st=artState(a.key),c=CLUES[idx],open=st.clues.includes(c[0]),d=a.clues[c[0]];
+  return `<div class="clue ${open?'open':''}"><h4><span>${idx+1}. ${c[1]}</span>${open?TAG[d.lean]+(d.weak?' <span class="weak">weak clue</span>':''):''}</h4>
+   ${open?`<p>${d.t}</p>`:`<p class="ask">${c[2]}</p><div><button class="btn sm" data-act="clue" data-a="${a.key}" data-c="${c[0]}">Reveal clue</button></div>`}</div>`;
+}
+function voteLine(key){
+  const st=artState(key),max=Math.max(1,...st.votes);
+  return `<div class="line5" role="group" aria-label="Where would you place this study?">${POS.map((p,i)=>`<button class="pos p${i}" data-act="vote" data-a="${key}" data-p="${i}"><span>${p}</span><span class="bar"><i style="width:${st.votes[i]/max*100}%"></i></span><span class="n">${st.votes[i]} team${st.votes[i]===1?'':'s'}</span></button>`).join('')}</div>`;
+}
+function artScreen(a){
+  const st=artState(a.key);
+  return `<div class="eyebrow">Article ${a.n} of 3</div><h2>${a.title}</h2>
+  ${strip('art-'+a.key)}
+  <div class="grid g2">
+   <div class="card"><h3>Method snapshot</h3><p class="cite">${a.cite}</p><ul class="snap">${a.snap.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+   <div><h3 style="margin-top:2px">Clue board</h3><div class="grid">${CLUES.map((_,i)=>clueCard(a,i)).join('')}</div>
+     <p style="margin-top:10px"><button class="btn sm" data-act="clueAll" data-a="${a.key}">Reveal all clues</button></p></div>
+  </div>
+  <div class="card" style="margin-top:18px"><h3>Place it on the line</h3>
+   <p>Each team decides where the study sits, then its speaker reports. Click once for each team’s vote. Votes carry no names.</p>
+   ${voteLine(a.key)}
+   <p style="margin-top:12px"><button class="btn sm" data-act="undo" data-a="${a.key}" ${st.hist.length?'':'disabled'}>Undo last vote</button> <button class="btn primary sm" data-act="reading" data-a="${a.key}">${st.reading?'Hide our reading':'Show our reading'}</button></p>
+  </div>
+  ${st.reading?`<div class="reading" style="margin-top:18px"><div class="eyebrow">Our reading, as one reasonable view</div><h3>${POS[a.pos]}</h3>
+    <div class="mini" aria-hidden="true">${[0,1,2,3,4].map(i=>`<span class="${i===a.pos?'on':''}"></span>`).join('')}</div>
+    <ul>${a.why.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <p class="note"><b>Keep in mind.</b> ${a.caution}</p>
+    <p><b>What would change our mind?</b> ${a.change}</p>
+    <p><b>Talk about it:</b> ${a.prompt}</p></div>`:''}`;
+}
+function sortScreen(){
+  const i=S.sort.i,c=CARDS[i],p=S.sort.picks[i],key='sort'+(i<5?1:2);
+  const answered=S.sort.picks.filter(Boolean).length,right=S.sort.picks.filter((x,k)=>x&&x===CARDS[k].a).length;
+  const names={Q:'Big Q',q:'small q',u:'Can’t tell'};
+  const pips=CARDS.map((_,k)=>{const x=S.sort.picks[k];const cls=k===i?'cur':x?(x===CARDS[k].a?'ok':'no'):'';return `<button class="pip ${cls}" data-act="sortGo" data-k="${k}" aria-label="Card ${k+1}">${x?(x===CARDS[k].a?'✓':'•'):k+1}</button>`}).join('');
+  const isLast=i===9;
+  return `<div class="eyebrow">Theory 7 of 8 · Sorting game, round ${i<5?1:2} of 2</div><h2>Which kind is it?</h2>
+  ${strip(key)}
+  <div class="card"><div class="cardhead" role="group" aria-label="Cards">${pips}</div>
+   <div class="eyebrow">Card ${i+1} of 10</div>
+   <p class="statement">${c.s}</p>
+   <p style="color:var(--muted)">Teams talk it over and write an answer. The speaker reports it, and the facilitator clicks the class answer.${i>=8?' <b>“Can’t tell”</b> is a real answer here.':''}</p>
+   <div class="choices">${['Q','q','u'].map(v=>`<button class="choice ${v} ${p===v?'picked':''}" data-act="sortPick" data-v="${v}" ${p?'disabled':''}><span class="lbl">${names[v]}</span></button>`).join('')}</div>
+   ${p?`<div class="fb ${p===c.a?'ok':'no'}" role="status"><h3>${p===c.a?'That matches our view.':'This one differs from our view. It makes a good talking point.'}</h3><p>Our answer: <b>${names[c.a]}</b>. ${c.why}</p>
+     <p><button class="btn primary sm" data-act="${isLast?'sortEnd':'sortNext'}">${isLast?'Finish':'Next card'}</button></p></div>`:''}
+   <p style="margin-top:14px;color:var(--muted)">Class so far: <b>${right}</b> of <b>${answered}</b> matched our answers.${answered===10?' All cards are done. Move on when you are ready.':''}</p>
+  </div>`;
+}
+function quizScreen(mode){
+  const pre=mode==='pre',st=pre?S.qzPre:S.qzPost,i=st.i,q=QUIZ[i],p=st.picks[i];
+  const opts=q.o.concat(pre?['Not sure yet']:[]);
+  const score=st.picks.filter((x,k)=>x===QUIZ[k].a).length, done=st.picks.filter(x=>x!==null).length;
+  const head=pre?`<div class="eyebrow">Theory 1 of 8 · Knowledge check ${i+1} of 5</div><h2>What do you know already?</h2><p class="lead">Nobody expects answers yet. Pick your best guess, or choose “Not sure yet”. The same questions return at the end, so you can see how far you have come.</p>`
+                :`<div class="eyebrow">Knowledge check again ${i+1} of 5</div><h2>What stuck?</h2><p class="lead">Here are the questions from the start of the session.</p>`;
+  const optCls=k=>p===null?'':(k===q.a?'right':(k===p?(k>=3?'unsure':'wrong'):''));
+  return `${head}
+  <div class="card"><p class="statement" style="font-size:clamp(1.4rem,2.6vw,2rem);max-width:40ch">${q.q}</p>
+   ${opts.map((o,k)=>`<button class="opt ${optCls(k)}" data-act="qz" data-m="${mode}" data-k="${k}" ${p!==null?'disabled':''}>${o}</button>`).join('')}
+   ${p!==null?`<div class="fb ${p===q.a?'ok':'no'}" role="status"><h3>${p===q.a?'Yes.':(p>=3?'A fine place to start.':'Not this time.')}</h3><p>${q.why}</p></div>`:''}
+   <p style="margin-top:14px"><button class="btn sm" data-act="qzPrev" data-m="${mode}" ${i?'':'disabled'}>Previous</button> <button class="btn primary sm" data-act="qzNext" data-m="${mode}" ${i<4?'':'disabled'}>Next question</button>
+   <span style="color:var(--muted);margin-left:10px">${done===5?(pre?`Starting point: ${score} of 5. The same questions return at the end.`:`You got ${score} of 5.`):'Answer on your own device or vote in chat. The page saves nothing.'}</span></p></div>`;
+}
+function lineScreen(){
+  const slots=POS.map((p,i)=>{
+    const here=ARTS.filter(a=>a.pos===i).map(a=>{const st=artState(a.key);const mx=Math.max(...st.votes);const top=st.votes.indexOf(mx);const v=mx>0?`<br>Class most voted: ${POS[top]}`:'';return `<div class="mk"><b>${a.n}. ${a.title}</b>${v}</div>`}).join('');
+    return `<div class="slot p${i}">${here}<div class="lab">${p}</div></div>`}).join('');
+  return `<div class="eyebrow">Putting it together</div><h2>Three studies, one line</h2>
+  <p class="lead">Big Q and small q sit at the two ends of a line. Real studies often fall between them.</p>
+  <div class="axis" style="margin:18px 0">${slots}</div>
+  <div class="grid g3">
+   <div class="card"><h3>Look at the practice</h3><p>Look at what the researchers did. Their label tells you only part of the story.</p></div>
+   <div class="card"><h3>Use several clues</h3><p>One word or one number rarely settles the question.</p></div>
+   <div class="card"><h3>Say what you can’t see</h3><p>A paper that reports nothing about a practice may still have done it.</p></div></div>`;
+}
+
+const screens = [
+ {id:'welcome',phase:'Warm-up',title:'Welcome',t:3,
+  do:'Share this page. Click Speaker draw, set the number of teams (use 1 for a whole-class draw), and paste each team’s first names. Students can type their names into chat or a shared team doc. The page keeps names in memory only.',
+  say:'Today you will learn two terms by playing with them. Nobody will stand alone in the spotlight. Your team writes an answer together, and the draw picks one name to read it out.',
+  render:()=>`<div class="hero"><div class="eyebrow">A classroom game for qualitative research</div>
+   <h1 class="title"><span class="Q">Big Q</span><span class="or">or</span><span class="q">small q</span><span style="font-size:.5em">?</span></h1>
+   <p class="lead">Two researchers can both use interviews or online posts and still work in very different ways. By the end of this session you will tell which way a published study works, using clues anyone can learn.</p></div>
+   <div class="grid g2"><div class="card"><h3>The plan</h3><ol class="steps"><li><span><b>Learn the basics:</b> words, codes, themes and paradigms.</span></li><li><span><b>Sort statements:</b> Big Q, small q or can’t tell.</span></li><li><span><b>Investigate three real studies</b> from digital criminology.</span></li></ol></div>
+   <div class="card"><h3>How we play</h3><ul><li>Your team writes its answer together.</li><li>Everyone’s name goes into the speaker draw, and the draw picks one name to read the team’s answer to the class.</li><li>The speaker reads what the team wrote. The whole team owns every answer.</li><li>Nothing receives a grade.</li></ul></div></div>`},
+ {id:'check',phase:'Theory',title:'Knowledge check',t:4,
+  do:'Run this as a baseline. Teams type their guess in chat (A, B, C or “not sure”), and you click the class answer. Reassure students that nobody expects correct answers yet.',
+  say:'This is a starting point. Guess freely or choose “not sure”. We will return to these questions at the end and see how far we have come.',
+  render:()=>quizScreen('pre')},
+ {id:'basics',phase:'Theory',title:'The basics',t:4,
+  do:'Let teams guess in chat before you click. Then click the answer. Stay on the ladder until “theme” feels solid, because the whole session depends on it.',
+  say:'Qualitative research works with meaning: words, posts, stories. A theme goes beyond a topic. A topic works like a bucket, and a theme says something about meaning.',
+  render:()=>{const b=S.basics;return `<div class="eyebrow">Theory 2 of 8</div><h2>The basics: words, codes and themes</h2>
+   <div class="grid g2"><div class="card"><h3>Qualitative research</h3><p>Qualitative research looks at <b>meaning</b>: what people say, write or share, and what it means to them. Quantitative research works with numbers such as counts, scores and scales.</p>
+    <p>Counting a café’s star ratings is quantitative. Reading why people wrote what they wrote is qualitative.</p></div>
+   <div class="card"><h3>From data to themes</h3><div class="ladder">
+    <div class="rung"><div class="k">Data</div>“Waited 20 minutes, but the barista remembered my name.”</div><div class="arrow" aria-hidden="true">↓</div>
+    <div class="rung"><div class="k">Codes</div>long wait · remembered my name</div><div class="arrow" aria-hidden="true">↓</div>
+    <div class="rung theme"><div class="k">Theme</div>A wait feels shorter when people feel recognised</div></div></div></div>
+   <div class="card" style="margin-top:18px"><h3>Topic or theme?</h3><p>Talk it over in your team and type your answer. Which of these is a <b>theme</b>?</p>
+    <div class="choices"><button class="choice ${b==='A'?'picked':''}" data-act="basics" data-v="A"><span>A</span>“Customer comments about waiting times.”</button><button class="choice ${b==='B'?'picked':''}" data-act="basics" data-v="B"><span>B</span>“A wait feels shorter when people feel recognised.”</button></div>
+    ${b?`<div class="fb ${b==='B'?'ok':'no'}" role="status"><h3>${b==='B'?'Yes, B.':'Close. The answer is B.'}</h3><p>A is a <b>topic</b>: a bucket that comments go in. B is a <b>theme</b>: it says something about what the comments mean. Hold on to this difference, because it matters later.</p></div>`:''}</div>`}},
+ {id:'paradigm',phase:'Theory',title:'What is a paradigm?',t:3,
+  do:'Ask teams to type an example of how they know it is hot outside. Link their answers to the two views below.',
+  say:'A paradigm works like a rulebook plus a pair of glasses. It shapes what you ask, what you accept as evidence and what role you give yourself.',
+  render:()=>`<div class="eyebrow">Theory 3 of 8</div><h2>What is a paradigm?</h2>
+   <p class="lead">A paradigm is a set of shared beliefs about what counts as knowledge and how to get it. Think of it as the rulebook and the glasses a researcher works with.</p>
+   <div class="grid g3" style="margin:16px 0"><div class="card"><h3>What is there to know?</h3><p>Is there one fact to discover, or are there many meanings?</p></div><div class="card"><h3>How can we know it?</h3><p>By measuring, or by understanding how people make sense of things?</p></div><div class="card"><h3>What is my part in it?</h3><p>Should I stay out of the way, or does my view belong in the work?</p></div></div>
+   <div class="grid g2"><div class="card" style="border-top:6px solid var(--smallq)"><h3>The thermometer view</h3><p>Temperature is a fact. Measure it, and anyone gets the same number.</p></div>
+   <div class="card" style="border-top:6px solid var(--bigq)"><h3>The lived view</h3><p>“Hot” depends on who you are, where you are and what you expect. To understand it, you ask people and interpret what they say.</p></div></div>
+   <p class="note blue" style="margin-top:16px">Both views have value. They lead to different research, with different ideas of what good research looks like. Big Q and small q describe which rulebook a study follows. Researchers call these questions ontology and epistemology. You can leave those words for later.</p>`},
+ {id:'smallq',phase:'Theory',title:'small q',t:2,
+  do:'Read the fingerprints. Ask: which of these would you expect in a study that wants the same result whoever does the coding?',
+  say:'Small q means qualitative technique inside a quantitative way of thinking. It follows its own values, and many strong studies use it.',
+  render:()=>`<div class="eyebrow">Theory 4 of 8</div><h2 class="big" style="color:var(--smallq)">small q</h2>
+   <p class="lead">Qualitative methods used <b>inside a quantitative way of thinking</b>.</p>
+   <div class="grid g2"><div class="card"><h3>Fingerprints</h3><ul><li>A second coder often checks the coding.</li><li>The researcher may write a codebook in advance.</li><li>The researcher aims to reduce “bias”.</li><li>The researcher treats themes as findings that sit in the data.</li><li>Counts and frequencies appear often.</li></ul></div>
+   <div class="card"><h3>An example</h3><p>A survey ends with “Any other comments?” Two researchers code the answers using a list of categories and check how often they agree. Then they report how many people mentioned each category.</p>
+   <p>The answers are words, and the analysis follows quantitative values: consistency, neutrality and counts.</p></div></div>
+   <p class="note" style="margin-top:16px">Kidder and Fine (1987) introduced the terms. Braun and Clarke (2013) use them to separate kinds of qualitative research. Small q follows its own set of values, and many valuable studies use it.</p>`},
+ {id:'bigq',phase:'Theory',title:'Big Q',t:2,
+  do:'Read the fingerprints and stress the closing note: Big Q has standards of its own.',
+  say:'Big Q is a whole way of doing research. The researcher’s perspective helps make the meaning, and the researcher uses it openly.',
+  render:()=>`<div class="eyebrow">Theory 5 of 8</div><h2 class="big" style="color:var(--bigq)">Big Q</h2>
+   <p class="lead">Qualitative research as a <b>paradigm of its own</b>.</p>
+   <div class="grid g2"><div class="card"><h3>Fingerprints</h3><ul><li>The researcher’s perspective serves as a resource.</li><li>Reflexivity: the researcher thinks openly about how their own assumptions shape the analysis.</li><li>Coding stays open and changes as understanding grows.</li><li>The researcher builds themes through interpretation.</li><li>Meaning depends on context and on who interprets it.</li></ul></div>
+   <div class="card"><h3>An example</h3><p>A researcher reads online posts again and again, writes notes on their own assumptions, and builds themes that say something about what the posts mean to the people who wrote them.</p>
+   <p>Readers judge quality by how clear, thoughtful and well argued the analysis is.</p></div></div>
+   <p class="note blue" style="margin-top:16px">Big Q has standards of its own, such as transparency, coherence and depth.</p>`},
+ {id:'compare',phase:'Theory',title:'Side by side',t:2,
+  do:'Give teams 20 seconds to find the row that surprises them most, then take two answers from the chat.',
+  say:'These rows describe tendencies. Real studies often sit somewhere between the two columns.',
+  render:()=>`<div class="eyebrow">Theory 6 of 8</div><h2>Side by side</h2>
+   <div class="tscroll"><table class="tbl"><thead><tr><th></th><th class="c1">small q</th><th class="c2">Big Q</th></tr></thead><tbody>
+   <tr><th scope="row">Where it sits</th><td>Qualitative methods inside a quantitative way of thinking</td><td>A qualitative way of thinking in its own right</td></tr>
+   <tr><th scope="row">Researcher’s role</th><td>Stays neutral and keeps bias low</td><td>Brings a perspective and uses it openly</td></tr>
+   <tr><th scope="row">Coding</th><td>Fixed in advance and often checked by a second coder</td><td>Open and changing</td></tr>
+   <tr><th scope="row">How themes arise</th><td>The researcher finds them in the data</td><td>The researcher builds them through interpretation</td></tr>
+   <tr><th scope="row">What counts as good</th><td>Reliable, consistent, repeatable</td><td>Reflective, transparent, coherent, deep</td></tr>
+   <tr><th scope="row">You might see</th><td>Codebooks, agreement scores, counts</td><td>Notes on the researcher’s own position, rich interpretation</td></tr></tbody></table></div>
+   <p class="note" style="margin-top:16px">Think of a line with two ends. Many studies sit somewhere between them.</p>`},
+ {id:'sort',phase:'Theory',title:'Sorting game',t:8,
+  do:'Draw speakers for round 1 (cards 1 to 5). Teams discuss for about 45 seconds a card, or type Q, q or ? in chat. The speaker reports, you click the class answer and read the explanation. Draw again for round 2 (cards 6 to 10).',
+  say:'Cards 9 and 10 offer a third option: can’t tell. It is a real answer.',
+  render:sortScreen},
+ {id:'clues',phase:'Theory',title:'The clue kit',t:3,
+  do:'Keep this on screen while teams start the case studies. Read the four rules aloud.',
+  say:'You are detectives. Collect clues, weigh them together and say what you cannot see.',
+  render:()=>`<div class="eyebrow">Theory 8 of 8</div><h2>The clue kit</h2>
+   <p class="lead">Six clues to look for in any methods section.</p>
+   <div class="kit">${CLUES.map((c,i)=>`<div class="clue open"><h4><span>${i+1}. ${c[1]}</span></h4><p>${c[2]}</p></div>`).join('')}</div>
+   <div class="card" style="margin-top:18px"><h3>Four rules</h3><ol><li><b>Use several clues.</b> One word or one number rarely settles the question.</li><li><b>Words can mislead.</b> “Emerged” does not prove small q.</li><li><b>Judge what the authors did.</b> The label they chose carries less weight.</li><li><b>Say what you can’t see.</b> A paper that reports nothing about reflexivity may still have practised it.</li></ol></div>`},
+ {id:'intro',phase:'Casework',title:'Three real studies',t:1,
+  do:'Explain the format. Each study has a snapshot, a clue board and a line. Teams decide together and the drawn speaker reports.',
+  say:'These are real studies from digital criminology. We practise reading how they work, and we make no judgement of the authors.',
+  render:()=>`<div class="eyebrow">Casework</div><h2>Now the real thing</h2>
+   <p class="lead">Three published studies from digital criminology. For each one, your team reads a short method snapshot, hunts for clues and decides where the study sits on the line.</p>
+   <div class="grid g2"><div class="card"><h3>For each study</h3><ol class="steps"><li><span>Read the snapshot.</span></li><li><span>Reveal clues as speakers report them.</span></li><li><span>Place the study on the line.</span></li><li><span>Compare with our reading.</span></li></ol></div>
+   <div class="card"><h3>The line</h3><div class="line5" style="margin-top:6px">${POS.map((p,i)=>`<div class="pos p${i}"><span>${p}</span></div>`).join('')}</div><p style="margin-top:12px">We practise reading how a study works and make no judgement of the authors. Disagreeing with our reading is welcome.</p></div></div>`},
+ ...ARTS.map((a,idx)=>({id:'art-'+a.key,phase:'Casework',title:'Article '+a.n,t:7,
+  do:'Draw speakers. Teams read the snapshot for 2 minutes, in breakouts or silently on screen. Reveal clues one at a time as speakers report them, and ask for the team’s evidence along with its verdict. Teams vote (one click per team), then show our reading and read the “Keep in mind” box. '+['This is the clearest small q lean of the three. Remind students that small q follows its own values and produces useful studies.','This is the clearest Big Q case, with a trap in the wording.','This is the debatable one. Let students disagree with our reading.'][idx],
+  say:['Small q lens: categories set first, counts, no discussion of the researchers’ position.','This one says “emerged” and works in a Big Q way. Use it to show why one word gives a weak clue.','This one names a Big Q method and follows an existing theory. Ask whether the label matches the practice.'][idx],
+  render:()=>artScreen(a)})),
+ {id:'line',phase:'Casework',title:'The line',t:2,
+  do:'Show where we placed the three studies and, if you voted, where the class landed. Read the three takeaways.',
+  say:'You can now say where a study sits and why, and you can say what you cannot see.',
+  render:lineScreen},
+ {id:'quiz',phase:'Wrap-up',title:'Knowledge check again',t:3,
+  do:'Share the page link so students can answer privately on their own device, or have teams vote in chat and click for them.',
+  say:'Here are the same five questions. Notice how much easier they feel now.',
+  render:()=>quizScreen('post')},
+ {id:'reflect',phase:'Wrap-up',title:'Reflect',t:3,
+  do:'Collect anonymous answers on a shared board or poll. Read two or three aloud yourself so no student has to.',
+  say:'Thank you. Everyone’s name went into the draw, and everyone’s thinking counted.',
+  render:()=>`<div class="eyebrow">Wrap-up</div><h2>One minute to reflect</h2>
+   <p class="lead">Add your answers anonymously to the shared board or poll.</p>
+   <div class="grid g3"><div class="card"><h3>It clicked</h3><p>One thing that makes more sense now.</p></div><div class="card"><h3>Still fuzzy</h3><p>One thing you would like explained again.</p></div><div class="card"><h3>Most useful clue</h3><p>Which of the six clues helped you most?</p></div></div>
+   <div class="card" style="margin-top:18px"><h3>To read next</h3><ul><li>Braun, V., & Clarke, V. (2013). <i>Successful qualitative research: A practical guide for beginners.</i> SAGE.</li><li>Kidder, L. H., & Fine, M. (1987). Qualitative and quantitative methods: When stories converge. <i>New Directions for Program Evaluation, 35</i>, 57–75.</li><li>The three studies from today, linked on each screen.</li></ul></div>`}
+];
+
+/* ---------- shell ---------- */
+function header(){
+  const sc=screens[S.i];
+  let dots='',last='';
+  screens.forEach((s,k)=>{if(last&&s.phase!==last)dots+='<span class="gap"></span>';last=s.phase;dots+=`<button class="${k===S.i?'cur':k<S.i?'done':''}" data-act="go" data-k="${k}" title="${esc(s.phase+': '+s.title)}" aria-label="${esc(s.title)}"></button>`});
+  return `<header class="top"><div class="logo" aria-label="Big Q or small q"><span class="L">Q</span><span class="s">q</span></div>
+   <nav class="prog" aria-label="Progress">${dots}</nav><span class="phase">${sc.phase} · ${S.i+1} of ${screens.length}</span>
+   <div class="hbtns"><button class="btn" data-act="openDraw">Speaker draw</button><a class="btn" href="#facilitator" style="text-decoration:none;color:inherit">Facilitator view</a></div></header>`;
+}
+function footer(){
+  const nx=screens[S.i+1];
+  return `<footer class="foot"><button class="btn" data-act="prev" ${S.i?'':'disabled'}>Back</button><span class="hint">Arrow keys also move between screens</span><button class="btn primary" data-act="next" ${nx?'':'disabled'}>${nx?'Next: '+esc(nx.title):'The end'}</button></footer>`;
+}
+function facilitatorHTML(){
+  const rows=screens.map((s,k)=>`<tr><td class="t">${k+1}. ${esc(s.title)}<br><span class="weak">${s.phase} · ${s.t} min</span></td><td>${s.do}</td><td>${s.say}</td></tr>`).join('');
+  const total=screens.reduce((a,s)=>a+s.t,0);
+  return `<div class="fac" style="height:100%;overflow:auto"><p><a href="#game">← Back to the game</a></p>
+   <h1 style="font-size:3rem;margin:.2em 0">Facilitator view</h1>
+   <p class="note"><b>Keep this off the shared screen.</b> Open this page in a second tab or on your phone and add <code>#facilitator</code> to the address. Game progress and drawn names live in each tab separately.</p>
+   <h2>Run of show, about ${total} minutes</h2>
+   <p>This plan assumes a video call with chat and breakout rooms. To save time, cut the sorting game to cards 1 to 5 plus cards 9 and 10, or skip Article 3.</p>
+   <table><thead><tr><th>Screen</th><th>You do</th><th>You say</th></tr></thead><tbody>${rows}</tbody></table>
+   <h2>Speaker draw</h2><ul><li>Open <b>Speaker draw</b> and choose the number of teams. Set it to 1 to draw one speaker for the whole class.</li><li>Paste each team’s first names, one per line. Students can type them in chat or a shared doc.</li><li>Each draw picks one name per team and skips anyone who has already spoken until every team member has had a turn.</li><li>Use ↻ only if someone is absent or cannot connect. The skipped name returns to the pool.</li><li>This tab holds the names in memory only, and they vanish when you close or reload it.</li></ul>
+   <h2>Knowledge check</h2><p>The same five questions run at the start (with a “Not sure yet” option) and at the end of the session. Students can answer privately if you share the page link, or teams can vote in chat and you click for them.</p>
+   <h2>Verify before class</h2><ul>
+   <li><b>Wording.</b> Check the Big Q and small q descriptions against the 2013 chapter and add chapter and page numbers. Check the Kidder and Fine (1987) reference details.</li>
+   <li><b>Article 1 (Cross & Layt).</b> I read the full methods and most of the discussion. Check the end of the paper for coder checks or a reflexivity statement.</li>
+   <li><b>Article 2 (Childs).</b> The “emerged” and “construct” wording and the absence of counting come from the article page. Check them in the findings.</li>
+   <li><b>Article 3 (Zhou & Hendy).</b> I read the introduction, methods and most of the findings and skipped the discussion and limitations, which may contain a reflexivity statement. The page text I retrieved omitted the journal name, so add it.</li>
+   <li><b>Our readings</b> are teaching judgements based on what each paper reports. Invite disagreement.</li></ul></div>`;
+}
+let _app;
+function render(keep){
+  _app=_app||$('#app');
+  if(location.hash==='#facilitator'){_app.style.display='block';_app.innerHTML=facilitatorHTML();return}
+  _app.style.display='';
+  const m=$('#main'),top=m?m.scrollTop:0;
+  _app.innerHTML=header()+`<main id="main" tabindex="-1"><div class="wrap">${screens[S.i].render()}</div></main>`+footer();
+  const nm=$('#main');if(nm)nm.scrollTop=keep?top:0;
+  if(S.draw)renderModal();
+}
+function countText(t){const T=S.teams[t];return `${T.names.length} name${T.names.length===1?'':'s'}, ${T.names.filter(n=>!T.used.includes(n)).length} still to speak`}
+function renderModal(){
+  const el=$('#modal');el.classList.toggle('hidden',!S.draw);
+  if(!S.draw){el.innerHTML='';return}
+  const teams=Array.from({length:S.teamCount},(_,t)=>`<div class="tcard"><label for="names-${t}">${S.teamCount===1?'Whole class':'Team '+(t+1)}</label><textarea id="names-${t}" data-team="${t}" rows="6" placeholder="One first name per line">${esc(S.teams[t].text)}</textarea><div class="count" id="count-${t}">${countText(t)}</div></div>`).join('');
+  el.innerHTML=`<div class="scrim" data-act="closeDraw"></div><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgT">
+   <h2 id="dlgT">Speaker draw</h2>
+   <p>Students type their first names into chat or a team doc, and you paste each team’s list here. On each round, the draw picks one name per team at random. The draw skips anyone who has already spoken until every team member has had a turn. Set teams to 1 for a whole-class draw.</p>
+   <p><label for="teamCount"><b>Number of teams</b></label> <select id="teamCount">${[1,2,3,4,5,6].map(n=>`<option ${n===S.teamCount?'selected':''}>${n}</option>`).join('')}</select></p>
+   <div class="grid g3">${teams}</div>
+   <p class="note blue" style="margin-top:14px">This browser tab holds the names, and they disappear when you close or reload it.</p>
+   <p style="margin-top:14px"><button class="btn primary" data-act="closeDraw">Done</button></p></div>`;
+  const f=$('#teamCount');if(f&&!document.activeElement.closest?.('.dlg'))f.focus();
+}
+function bump(k){S.i=Math.max(0,Math.min(screens.length-1,k));render(false)}
+const qzState=m=>m==='pre'?S.qzPre:S.qzPost;
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act,d=el.dataset;
+  switch(a){
+   case 'next':bump(S.i+1);break; case 'prev':bump(S.i-1);break; case 'go':bump(+d.k);break;
+   case 'openDraw':S.draw=true;renderModal();break;
+   case 'closeDraw':S.draw=false;renderModal();render(true);break;
+   case 'draw':drawRound(d.key);render(true);break;
+   case 'redraw':redrawOne(d.key,+d.t);render(true);break;
+   case 'basics':S.basics=d.v;render(true);break;
+   case 'sortPick':S.sort.picks[S.sort.i]=d.v;render(true);break;
+   case 'sortNext':S.sort.i=Math.min(9,S.sort.i+1);render(false);break;
+   case 'sortGo':S.sort.i=+d.k;render(true);break;
+   case 'sortEnd':render(true);break;
+   case 'clue':{const st=artState(d.a);if(!st.clues.includes(d.c))st.clues.push(d.c);render(true);break}
+   case 'clueAll':{const st=artState(d.a);st.clues=CLUES.map(c=>c[0]);render(true);break}
+   case 'vote':{const st=artState(d.a);st.votes[+d.p]++;st.hist.push(+d.p);render(true);break}
+   case 'undo':{const st=artState(d.a);const p=st.hist.pop();if(p!==undefined)st.votes[p]--;render(true);break}
+   case 'reading':{const st=artState(d.a);st.reading=!st.reading;render(true);break}
+   case 'qz':{const st=qzState(d.m);st.picks[st.i]=+d.k;render(true);break}
+   case 'qzNext':{const st=qzState(d.m);st.i=Math.min(4,st.i+1);render(false);break}
+   case 'qzPrev':{const st=qzState(d.m);st.i=Math.max(0,st.i-1);render(false);break}
+  }
+});
+document.addEventListener('input',e=>{
+  const ta=e.target.closest('textarea[data-team]');if(!ta)return;
+  const t=+ta.dataset.team,T=S.teams[t];T.text=ta.value;T.names=parseNames(ta.value);T.used=T.used.filter(n=>T.names.includes(n));
+  const c=$('#count-'+t);if(c)c.textContent=countText(t);
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='teamCount'){S.teamCount=+e.target.value;renderModal();const f=$('#teamCount');if(f)f.focus()}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&S.draw){S.draw=false;renderModal();render(true);return}
+  if(S.draw||location.hash==='#facilitator')return;
+  const tag=(document.activeElement&&document.activeElement.tagName)||'';
+  if(/INPUT|TEXTAREA|SELECT/.test(tag))return;
+  if(e.key==='ArrowRight')bump(S.i+1); else if(e.key==='ArrowLeft')bump(S.i-1);
+});
+window.addEventListener('hashchange',()=>render(false));
+
+/* ---------- boot ---------- */
+try{window.claude?.hot?.snapshot?.(()=>JSON.parse(JSON.stringify({i:S.i,teamCount:S.teamCount,teams:S.teams,draws:S.draws,basics:S.basics,sort:S.sort,art:S.art,qzPre:S.qzPre,qzPost:S.qzPost})))}catch(e){}
+function boot(saved){
+  if(saved&&typeof saved==='object'){try{Object.assign(S,saved)}catch(e){}}
+  if(S.i>=screens.length)S.i=0;
+  render(false);
+}
+if(window.claude?.hot?.ready)window.claude.hot.ready(boot);else boot(window.claude?.hot?.data??{});
+</script>
+</body>
+</html>
